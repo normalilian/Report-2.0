@@ -1,0 +1,185 @@
+---
+title: "Project 2"
+author: "520523472, 520048207, 520220674, 520448692, 510450920, 500499069"
+subtitle: "What Lifestyle Factors affect Hours of Sleep?"
+date: "University of Sydney | 12th April 2022"
+output:
+  html_document:
+    fig_caption: yes
+    number_sections: yes
+    self_contained: yes
+    theme: flatly
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+---
+
+# Executive Summary
+•	Clear & Interesting
+•	Main Insights 💡✨
+•	Type of Data
+
+# Initial Data Analysis (IDA)
+```{r}
+setwd("/Users/itme/Desktop/DATA1001/Project 2")
+survey=read.csv("SurveyResponses.csv")
+
+str(survey)
+```
+
+```{r}
+#Load 'tidyverse' package
+library(tidyverse)
+
+#DATA CLEANING
+surveyC = survey %>%
+  filter(survey$Shots %in% c(1:100) & survey$Sleep %in% c(0:24))
+
+# Exclude intentionally silly responses
+surveyC$Shots=as.numeric(surveyC$Shots)
+# Change the 'Like 30-40hrs' response to N/A
+surveyC$Work=as.numeric(surveyC$Work)
+
+# Replace 'None' in Naps with 0
+Naps=replace(surveyC$Naps,surveyC$Naps=="None","0")
+surveyC$Naps=as.numeric(Naps)
+
+# Change variable types: chr to num
+surveyC$Shots=as.numeric(surveyC$Shots)
+surveyC$Sleep=as.numeric(surveyC$Sleep)
+surveyC$Naps=as.numeric(surveyC$Naps)
+surveyC$Shots=as.numeric(surveyC$Shots)
+surveyC$Screen=as.numeric(surveyC$Screen)
+surveyC$Milk=as.factor(surveyC$Milk)
+surveyC$Wake=as.factor(surveyC$Wake)
+surveyC$Age=as.factor(surveyC$Age)
+surveyC$Sex=as.factor(surveyC$Sex)
+surveyC$Exercise=as.factor(surveyC$Exercise)
+
+# Order Wake up times in order:
+WakeO=factor(survey$Wake, levels=c("2:00","4:30", "4:45","5:00","5:30","6:00","6:30","6:45","7:00","7:10","7:15","7:20","7:35","8:00","8:30","9:00","9:30","10:00","10:30","11:00","11:30","12:00"))
+```
+
+## Cleaned Data
+```{r}
+# View the Raw Data (to check everything is A-okay)
+view(surveyC)
+```
+
+
+### Source
+* [where the data came from]
+
+### Structure
+[size & type of variables, incl. reclassification]
+* There are 152 individual responses exploring 11 variables.
+
+### Limitations
+* [careful: ‘Statistical Thinking’]
+
+### Assumptions
+* [a priori ideas]
+
+### Data Cleaning
+[changes from original format]
+
+
+
+
+# Research Question/s
+## Does Caffeine strongly influence Hours of Sleep differently for Fe/males? 
+```{r}
+# SCATTERPLOT of CAFFEINE & SLEEP: 
+P=ggplot(surveyC, aes(Shots/7,Sleep,fill=Sex)) +geom_point(size=3, pch=21) +labs(x="Caffeine (shots)", y="Sleep (hours)", title="Relationship between Caffeine and Hours of Sleep") +scale_fill_manual(values=c("magenta","cornflowerblue"))
+P
+```
+
+### Correlation Coefficients (2x)
+
+```{r}
+#Create subsets for Fe/male
+Fem_surveyC=subset(surveyC, surveyC$Sex =="Female")
+Male_surveyC=subset(surveyC, surveyC$Sex=="Male")
+```
+
+* Female
+```{r}
+Fem_cor=cor(Fem_surveyC$Sleep,Fem_surveyC$Shots)
+Fem_cor
+```
+* Male
+```{r}
+Male_cor=cor(Male_surveyC$Sleep,Male_surveyC$Shots)
+Male_cor
+```
+
+### Regression Lines (2x)
+* Female
+```{r}
+Lf=lm(Fem_surveyC$Sleep~Fem_surveyC$Shots)
+Lf$coeff
+lm(Sleep~Shots, Fem_surveyC)
+```
+* Male
+```{r}
+Lm=lm(Male_surveyC$Sleep~Male_surveyC$Shots)
+Lm$coeff
+lm(Sleep~Shots, Male_surveyC)
+```
+### Residual Plots (2x)
+```{r}
+par(mfrow=c(1,2))
+plot(Fem_surveyC$Shots, Lf$residuals, xlab="Caffeine (shots)", ylab="Residuals") + abline (h=0,col="magenta")
+plot(Male_surveyC$Shots, Lm$residuals, xlab="Caffeine (shots)", ylab="Residuals") + abline (h=0,col="cornflowerblue")
+```
+
+
+### Regression Lines on Scatterplot
+```{r}
+R=ggplot(surveyC, aes(Shots/7,Sleep,fill=Sex)) +geom_point(size=3, pch=21) +labs(x="Caffeine (shots)", y="Sleep (hours)", title="Relationship between Caffeine and Hours of Sleep") +scale_fill_manual(values=c("magenta","cornflowerblue")) +geom_smooth(method="lm", se=TRUE, size=1)
+R
+```
+
+**Summary and Analysis**
+* [Correlation between weak/strong. Linear model shows. Weak correlation for feamles (r=0.18) and males (r=0.19) can likely be explained by...]
+
+
+### Latest Screen Time on Hours of Sleep?
+```{r}
+S=ggplot(surveyC, aes(WakeO, Sleep,fill=Screen) +geom_point(size=3, pch=21,aes(col=Screen)) +labs(x="Wakeup Time", y="Sleep (hours)", title="Latest Screen Time on Hours of Sleep") +geom_smooth(method="lm", se=TRUE)
+
+S
+
+```
+
+
+* Wake (time)/Work (hours) on Hours of Sleep?
+```{r}
+WakeO=factor(survey$Wake, levels=c("2:00","4:30", "4:45","5:00","5:30","6:00","6:30","6:45","7:00","7:10","7:15","7:20","7:35","8:00","8:30","9:00","9:30","10:00","10:30","11:00","11:30","12:00"))
+
+W=ggplot(surveyC, aes(WakeO, Sleep,fill=Screen)) +geom_col(size=3, pch=1,aes(col=Screen)) +labs(x="Wake up Time", y="Sleep (hours)", title="Relationship between Wake Up Time on Hours of Sleep") +theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1))
+
+# Wake-up time or Work (hours) --> Was thinking maybe a Histogram??
+
+W
+```
+
+
+
+# Articles
+[at least 2 articles]
+
+# References
+[APA references for the above 2 articles]
+
+# Acknowledgments
+**Date & Time**    |    **Present**                    |   **Topic**
+-------------------|---------------------------------|------------------
+  8/3/22, 5:10PM   |   All present                   | Project 1 (0%)
+  29/3/22, 4:35PM  | Hatim, Harshini, Chiara, Norma, | Project 2 (13%) -
+                   | (Ravi + Bella exemption reasons)| Data Cleaning Survey A’s
+  5/4/22, 5:05PM   |   All (Norma virtually)         | Dividing + Assigning Tasks 
+                   |                                 | (2 subgroups)
+
+
